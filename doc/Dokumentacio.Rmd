@@ -1,0 +1,170 @@
+---
+title: "Dokumentacio"
+author: "Verba Zoltán"
+date: '2017 május 1 '
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+tweets <-  read.csv2( file = "data/clinton_trump_tweets.csv" )
+library(ggplot2)
+# IV/1. feladat
+
+# Oszlopdiagramok a tweetek szentiment- és emócióelemzésére
+
+# Először a szentimenteket hasonlítom össze:
+# Oszlopdiagram:
+od1 <- ggplot(tweets, aes(x = tweets$text_sentiment, fill = tweets$handle)) +
+  geom_bar(stat = "count", position = position_dodge())+
+  ggtitle("Candidate Tweets") +
+  xlab("")+
+  ylab("Tweet frequency")+
+  theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line("white"))
+
+od1 + scale_fill_discrete(name  ="Candidate")
+
+# az idősor változó elkészítése:
+tweets$time <- as.character(tweets$time)
+for (i in 1: length(tweets$time)){
+tweets$time[i] <- as.character(tweets$time[i])
+tweets$date[i] <- unlist(strsplit(tweets$time[i], split='T', fixed=TRUE))[1]
+}
+
+# Ránézésre azt látjuk, hogy nincsenek nagy eltérések a két jelölt különböző 
+# érzelmet sugározó tweetjeik között
+hillary_sub <- subset(tweets, tweets$handle == "Hillary Clinton")
+hillary_sent <- c(nrow(hillary_sub[hillary_sub$text_sentiment == "negative",]),
+                  nrow(hillary_sub[hillary_sub$text_sentiment == "neutral",]),
+                  nrow(hillary_sub[hillary_sub$text_sentiment == "positive",]))
+hillary_sent <- as.numeric(hillary_sent)
+
+trump_sub <- subset(tweets, tweets$handle == "Donald Trump")
+trump_sent <- c(nrow(trump_sub[trump_sub$text_sentiment == "negative",]),
+                  nrow(trump_sub[trump_sub$text_sentiment == "neutral",]),
+                  nrow(trump_sub[trump_sub$text_sentiment == "positive",]))
+trump_sent <- as.numeric(trump_sent)
+
+
+install.packages("zoo")
+library(zoo)
+zoo(hillary_sub, order.by=as.Date(as.character(hillary_sub$date), format = '%Y-%m-%d'))
+
+# csinálok subseteket az idősoros ábrák elkészítéséhez:
+id1_hillary_sub <- data.frame(table(hillary_sub$date, hillary_sub$text_sentiment))
+id1_trump_sub <- data.frame(table(trump_sub$date, trump_sub$text_sentiment))
+
+# az idősoros ábrák:
+id1_hillary_plot <- ggplot(id1_hillary_sub,aes(x=id1_hillary_sub$Var1,y=id1_hillary_sub$Freq,
+ colour=id1_hillary_sub$Var2,group=id1_hillary_sub$Var2)) + geom_line()
+id1_trump_plot <- ggplot(id1_trump_sub,aes(x=id1_trump_sub$Var1,y=id1_trump_sub$Freq,
+colour=id1_trump_sub$Var2,group=id1_trump_sub$Var2)) + geom_line()
+
+id1_hillary_plot
+id1_trump_plot
+# az x tengely labelje nem vmi szép, de az ábrából az látszik, hogy a vizsgált 
+# időszak alatt Hillarynél a pozitív tweetek dominálnak
+
+# Statisztikai teszt a tweetek különbözőségére:
+t.test(trump_sent, hillary_sent)
+t.test(trump_sent, hillary_sent, paired = TRUE)
+# Nem tudjuk szignifikánsan elvetni azt a nullhipotézist, hogy a tweetek megegyeznek.
+
+################################################################################
+
+# emotions:
+
+hillary_emo <- c(nrow(hillary_sub[hillary_sub$text_emotion == "joy",]),
+                  nrow(hillary_sub[hillary_sub$text_emotion == "disgust",]),
+                  nrow(hillary_sub[hillary_sub$text_emotion == "sadness",]),
+                  nrow(hillary_sub[hillary_sub$text_emotion == "fear",]),
+                  nrow(hillary_sub[hillary_sub$text_emotion == "anger",]),
+                  nrow(hillary_sub[hillary_sub$text_emotion == "surprise",]))
+hillary_emo <- as.numeric(hillary_emo)
+
+trump_emo <- c(nrow(trump_sub[trump_sub$text_emotion == "joy",]),
+                 nrow(trump_sub[trump_sub$text_emotion == "disgust",]),
+                 nrow(trump_sub[trump_sub$text_emotion == "sadness",]),
+                 nrow(trump_sub[trump_sub$text_emotion == "fear",]),
+                 nrow(trump_sub[trump_sub$text_emotion == "anger",]),
+                 nrow(trump_sub[trump_sub$text_emotion == "surprise",]))
+trump_emo <- as.numeric(trump_emo)
+
+od2 <- ggplot(tweets, aes(x = tweets$text_emotion, fill = tweets$handle)) +
+  geom_bar(stat = "count", position = position_dodge())+
+  ggtitle("Candidate Tweets") +
+  xlab("")+
+  ylab("Tweet frequency")+
+  theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line("white"))
+
+od2 + scale_fill_discrete(name  ="Candidate")
+
+
+id2_hillary_sub <- data.frame(table(hillary_sub$date, hillary_sub$text_emotion))
+id2_trump_sub <- data.frame(table(trump_sub$date, trump_sub$text_emotion))
+
+# az idősoros ábrák:
+id2_hillary_plot <- ggplot(id2_hillary_sub,aes(x=id2_hillary_sub$Var1,y=id2_hillary_sub$Freq,
+                                               colour=id2_hillary_sub$Var2,group=id2_hillary_sub$Var2)) + geom_line()
+
+id2_trump_plot <- ggplot(id2_trump_sub,aes(x=id2_trump_sub$Var1,y=id2_trump_sub$Freq,
+                                           colour=id2_trump_sub$Var2,group=id2_trump_sub$Var2)) + geom_line()
+
+id2_hillary_plot
+id2_trump_plot
+
+# Statisztikai teszt a tweetek különbözőségére:
+t.test(trump_emo, hillary_emo)
+t.test(trump_emo, hillary_emo, paired = TRUE)
+# Nem tudjuk szignifikánsan elvetni azt a nullhipotézist, hogy a tweetek megegyeznek.
+
+################################################################################
+
+# IV/2. feladat
+
+# kiválogatom a Trump által jegyzett android és iphone tweeteket
+tweets_writers <- tweets[((tweets$source_url == "http://twitter.com/download/iphone")  |
+                         (tweets$source_url == "http://twitter.com/download/android")) &
+                         (tweets$handle == "Donald Trump"), ]
+
+# emotions:
+writers_emo <- ggplot(tweets_writers, aes(x = tweets_writers$text_emotion,
+  fill = tweets_writers$source_url)) + 
+  geom_bar(stat = "count", position = position_dodge()) + 
+  scale_fill_manual( values = c("blue","red"))
+
+writers_emo
+
+# sentiments:
+writers_senti <- ggplot(tweets_writers, aes(x    = tweets_writers$text_sentiment, 
+fill = tweets_writers$source_url)) +
+geom_bar(stat = "count", position = position_dodge()) +
+scale_fill_manual( values = c("blue","red"))
+
+writers_senti
+
+# a statiszikalag szignifikáns különbség ellenőrzése:
+emo_iphone  <- table( tweets_writers[ tweets_writers$source_url == 
+                "http://twitter.com/download/iphone", c("text_emotion") ] )
+
+emo_android <- table( tweets_writers[ tweets_writers$source_url == 
+               "http://twitter.com/download/android", c("text_emotion") ] )
+
+senti_iphone  <- table( tweets_writers[ tweets_writers$source_url == 
+              "http://twitter.com/download/iphone", c("text_sentiment") ] )
+
+senti_android <- table( tweets_writers[ tweets_writers$source_url == 
+              "http://twitter.com/download/android", c("text_sentiment") ] )
+
+# t-teszt (emotions és sentiments)
+
+t.test(emo_iphone  , emo_android  , paired = TRUE)
+t.test(senti_iphone, senti_android, paired = TRUE)
+
+# Nem tudjuk elvetni a nullhipotézist -> nincs szignifikáns különbség egyik 
+# esetben sem az andorid és iphone tweetek között.
+```
