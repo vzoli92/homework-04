@@ -4,6 +4,9 @@ author: "Verba Zoltán"
 date: '2017 május 1 '
 output: html_document
 ---
+
+# Sajnos ez nem működik.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
